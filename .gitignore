@@ -1,0 +1,81 @@
+# ========================
+# Data files (MOST IMPORTANT for data wrangling)
+# ========================
+# Raw & large datasets should never go into Git
+data/
+raw_data/
+processed/
+datasets/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.json
+*.db
+*.sqlite3
+
+# Keep a small sample if you want (uncomment and adjust)
+# !data/sample_small.csv
+
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# ========================
+# Jupyter Notebooks
+# ========================
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# ========================
+# Environment & secrets
+# ========================
+.env
+.env.*
+*.key
+credentials.*
+
+# ========================
+# IDE & OS files
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ========================
+# Temporary / output files
+# ========================
+*.log
+*.tmp
+temp/
+tmp/
+cache/
+.cache/
+figures/          # or keep specific ones if small
+plots/
+eda_output/
