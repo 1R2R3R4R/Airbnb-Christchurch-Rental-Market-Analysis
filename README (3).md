@@ -8,7 +8,7 @@ This README documents the data sources, cleaning decisions, and analysis workflo
 2. [Deliverable 4 — Data Cleaning](#deliverable-4--data-cleaning)
    - [Christchurch Airbnb listings](#1-christchurch-airbnb-listings-clean_airbnbpy)
    - [Rental bond data](#2-rental-bond-data-clean_bondpy)
-3. [Next Steps (Deliverable 5)](#next-steps-deliverable-5)
+3. [Deliverable 5 — Joining Airbnb and Bond Data](#deliverable-5--joining-airbnb-and-bond-data)
 
 ---
 
@@ -204,10 +204,68 @@ Practically, this means these columns should be read as **model-based estimates 
 
 ---
 
-## Next Steps (Deliverable 5)
+## Deliverable 5 — Joining Airbnb and Bond Data
 
-Combine both datasets via `Location Id` ↔ Christchurch `neighbourhood`/coordinates (needs an SA2 → suburb/ward lookup) to compare rental prices and property availability across Airbnb and the long-term rental market.
+### Getting area codes for the Airbnb listings
 
-Two design decisions need to be resolved before this join can be written correctly:
-- **Time granularity:** Airbnb is monthly, bond data is quarterly — decide whether to aggregate Airbnb up to quarters or broadcast each bond-quarter across its 3 corresponding months.
-- **Geographic granularity:** Airbnb uses ward names (`neighbourhood`), bond data uses SA2 codes (`Location Id`) — decide whether to map wards to SA2s or aggregate bond data up to ward level.
+Airbnb's `neighbourhood` (ward name) and the bond data's `Location Id` (SA2 code) don't share a common key, so each Airbnb listing needed its own SA2 code looked up from its coordinates.
+
+- **Provider:** [Koordinates](https://koordinates.com/), querying the Stats NZ **"Statistical Area 2 2026"** layer (**layer ID `123515`**) via the [Koordinates Query API](https://help.koordinates.com/query-api-and-web-services/koordinates-query-api-non-technical-users/).
+- **Efficiency decision:** rather than querying all 28,795 rows, we deduped to the **3,956 unique `(latitude, longitude)` pairs** first — the same physical listing repeats every month, so this cut the number of API calls needed by ~7x.
+- **Threaded, not multi-processed:** these are network-bound HTTP requests, not CPU-bound work, so a `ThreadPoolExecutor` (10 workers) achieves the actual goal — parallel speedup — without the serialization overhead a process pool would add for a task this size.
+- **Resilience:** results are cached to `sa2_cache.csv` incrementally (every 200 queries), so an interrupted run only re-queries what's missing rather than starting over. All 3,956 points resolved successfully with zero failures.
+- **Output:** a new `area_code` column added to the Airbnb data, saved as `Airbnb_with_sa2.csv` so the (rate-limited, ~10-minute) query step never needs to be rerun once cached.
+
+### Choosing the join
+
+Airbnb's `month_year` and the bond data's `TimeFrame` were both converted to a shared `period` column (e.g. `2025Q4`), then joined on `(area_code, period)` ↔ `(Location Id, period)`.
+
+| Join type | Rows kept | Notes |
+|---|---|---|
+| **INNER** (used) | 21,946 (76.2%) | Every remaining row has both an Airbnb price and a bond rent figure — directly usable for the price-gap comparison below |
+| LEFT | 28,795 | Keeps every Airbnb row, but leaves rent columns blank for 6,849 rows (23.8%) with no matching area/quarter in the bond data |
+
+**INNER was chosen** because the gap analysis needs both prices to mean anything — a LEFT join would just carry unusable `NaN` rows into the analysis for no benefit.
+
+### Results
+
+**Median Airbnb price, Christchurch Central (SA2 `326600`):** **$237/night** (n=701 listings, after excluding <$20 or >$800 as likely data errors/non-representative outliers).
+
+**Largest short- vs. long-term rental price gap** (median `Airbnb nightly price − (Median Rent / 7)`, areas with ≥20 listings only):
+
+| Area | Median gap ($/night) | n |
+|---|---|---|
+| Holmwood | 209.57 | 71 |
+| Malvern | 194.57 | 84 |
+| Ensors | 187.00 | 41 |
+| Wigram North | 183.71 | 41 |
+| Wigram East | 183.00 | 29 |
+| Christchurch Central-West | 173.57 | 709 |
+| Sumner | 173.43 | 301 |
+| Papanui North | 171.00 | 20 |
+
+**Airbnb listings vs. active long-term bonds, by area** — the standout finding: Christchurch Central proper (`326600`) has **153 Airbnb listings but only 42 active bonds** — almost 4x more short-term than long-term rentals. Every neighbouring "Central" sub-area is the opposite (e.g. Central-East: 402 listings vs. 960 bonds; Central-North: 220 vs. 1,131), suggesting the literal city centre functions closer to a short-term-rental zone than a residential long-term rental market, unlike the areas immediately surrounding it.
+
+### Known limitation: a third SA2 vintage enters the picture
+
+Deliverable 4 already documented a 2018-vs-2023 SA2 vintage mismatch between the bond data and the Christchurch concordance. Koordinates' layer 123515 adds a **third vintage (2026)**, since that's the current Stats NZ SA2 boundary set. In practice this is a small, contained gap: a handful of `area_code` values returned by Koordinates (e.g. `333300`, `332501`, `332901`, `325302`) don't appear in `christchurch_sa2_lookup.csv` and so show up with no suburb name and no matching bond data. This is the same class of limitation as Deliverable 4's, just one generation further along — documented rather than silently dropped.
+
+### Bonus 1 — Comparing beds (approximate)
+
+The Airbnb dataset has **no bedroom-count column**, so an exact bed-for-bed comparison against the bond data's `Number Of Beds` breakdown isn't possible. As a documented, approximate stand-in, `room_type` was mapped to an assumed bed count (Entire home/apt ≈ 2, Private/Shared/Hotel room ≈ 1) and summed per area. Treat these figures as directional, not precise.
+
+### Bonus 2 — SQLite + SQL join
+
+Both cleaned datasets were loaded into a local SQLite database (`christchurch_housing.db`) and the same join was reproduced in SQL as a cross-check:
+
+```sql
+SELECT a.*, b.median_rent, b.active_bonds, b.rent_per_night
+FROM airbnb AS a
+INNER JOIN bond AS b
+    ON a.area_code = b."Location Id"
+    AND a.period    = b.period
+```
+
+**Result: 21,946 rows — an exact match** with the pandas inner join, confirming the join logic is correct both ways.
+
+**Outputs:** `Airbnb_with_sa2.csv`, `sa2_cache.csv`, `christchurch_housing.db`, `gap_median_bar.png`.
