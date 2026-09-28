@@ -285,11 +285,11 @@ Both thresholds are named parameters at the top of the cell and can be changed.
 
 **Findings (26 areas):**
 
-- Differences are small: the largest positive gap is 0.38 bedrooms, so in most areas short-term and long-term properties are similar in size.
+- In inner-city areas the differences are small: the largest positive gap is 0.38 bedrooms (Airbnb larger). Several central and inner-suburb areas sit near zero.
 - The biggest positive gaps are inner-city areas with heavy Airbnb activity: Christchurch Central-East (+0.38, about 325 Airbnb listings per quarter, long-term mean ≈ 1.56), Addington West (+0.30) and Christchurch Central-North (+0.22). This is consistent with a smaller-unit long-term stock there.
-- Negative gaps appear in suburban and coastal areas, e.g. Sumner (−0.27), Mona Vale (−0.26), Sydenham North (−0.25) and Phillipstown (−0.21), consistent with larger long-term family homes.
+- Negative gaps appear in suburban and coastal areas and get large in several of them: Sumner (−0.27), Mona Vale (−0.26), Sydenham North (−0.25) and Phillipstown (−0.21), up to roughly −0.9 to −1.35 in Redcliffs, Bush Inn, Bryndwr North, Riccarton West, Ilam North and Wharenui. This is consistent with larger long-term family homes (about 3 or more bedrooms) in those areas.
 
-**Caveats:** the Airbnb proxy is capped at 2 bedrooms, so any area whose long-term mean exceeds 2 will show a negative gap regardless of true Airbnb sizes; the negative side is therefore partly an artefact of the proxy. The coverage filter means results describe the better-covered (mostly inner-suburb) areas, not all of Christchurch. Short-term and long-term are defined by data source (see above).
+**Caveats:** the Airbnb proxy is capped at 2 bedrooms, so any area whose long-term mean exceeds 2 will show a negative gap regardless of true Airbnb sizes; the negative side is therefore largely an artefact of the proxy: it shows that long-term rentals there are large, not that Airbnb properties are small. The coverage filter means results describe the better-covered (mostly inner-suburb) areas, not all of Christchurch. Short-term and long-term are defined by data source (see above).
 
 A bar chart of `size_diff` by area is saved as `bedroom_size_diff_bar.png`.
 
