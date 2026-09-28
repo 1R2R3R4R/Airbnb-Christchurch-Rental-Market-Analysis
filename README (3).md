@@ -1,6 +1,6 @@
 # Christchurch Housing Analysis — Data Documentation
 
-This README documents the data sources, cleaning decisions, and analysis workflows behind the project, covering Deliverable 2 (initial KNIME exploration of the national Airbnb dataset) through Deliverable 4 (Python-based cleaning of the Christchurch-specific Airbnb panel and Tenancy Services bond data).
+This README documents the data sources, cleaning decisions, and analysis workflows behind the project, covering Deliverable 2 (initial KNIME exploration of the national Airbnb dataset) through Deliverable 4 (Python-based cleaning of the Christchurch-specific Airbnb panel and Tenancy Services bond data), Deliverable 5 (joining the two datasets and comparing short- and long-term rentals), and Deliverable 6 (revisiting the code against the Week 9 best coding practices).
 
 ## Contents
 
@@ -9,6 +9,10 @@ This README documents the data sources, cleaning decisions, and analysis workflo
    - [Christchurch Airbnb listings](#1-christchurch-airbnb-listings-clean_airbnbpy)
    - [Rental bond data](#2-rental-bond-data-clean_bondpy)
 3. [Deliverable 5 — Joining Airbnb and Bond Data](#deliverable-5--joining-airbnb-and-bond-data)
+   - [How short-term vs. long-term is defined](#how-short-term-vs-long-term-is-defined)
+   - [Bonus 1 — Comparing beds](#bonus-1--comparing-beds-mean-bedrooms-per-property)
+   - [Bonus 2 — SQLite + SQL join](#bonus-2--sqlite--sql-join)
+4. [Deliverable 6 — Coding Practices Review](#deliverable-6--coding-practices-review)
 
 ---
 
@@ -246,13 +250,48 @@ Airbnb's `month_year` and the bond data's `TimeFrame` were both converted to a s
 
 **Airbnb listings vs. active long-term bonds, by area** — the standout finding: Christchurch Central proper (`326600`) has **153 Airbnb listings but only 42 active bonds** — almost 4x more short-term than long-term rentals. Every neighbouring "Central" sub-area is the opposite (e.g. Central-East: 402 listings vs. 960 bonds; Central-North: 220 vs. 1,131), suggesting the literal city centre functions closer to a short-term-rental zone than a residential long-term rental market, unlike the areas immediately surrounding it.
 
+### How short-term vs. long-term is defined
+
+The short-term / long-term split is **not calculated from any stay-length field**. It comes from which dataset a row belongs to:
+
+- **Airbnb data = short-term**, by definition of the platform (nightly-rate listings).
+- **Tenancy Services bond data = long-term**, by definition of NZ law: a bond is required for a standard residential tenancy under the Residential Tenancies Act, while short-term holiday lets are generally outside the Act and so never generate a bond record.
+
+**Limitation:** "short-term" here means "listed on the short-term rental platform", not "verified to be under some number of days". A three-month Airbnb booking is still classed as short-term, because neither dataset records actual stay length. This is a limitation of the comparison, not a data error.
+
 ### Known limitation: a third SA2 vintage enters the picture
 
 Deliverable 4 already documented a 2018-vs-2023 SA2 vintage mismatch between the bond data and the Christchurch concordance. Koordinates' layer 123515 adds a **third vintage (2026)**, since that's the current Stats NZ SA2 boundary set. In practice this is a small, contained gap: a handful of `area_code` values returned by Koordinates (e.g. `333300`, `332501`, `332901`, `325302`) don't appear in `christchurch_sa2_lookup.csv` and so show up with no suburb name and no matching bond data. This is the same class of limitation as Deliverable 4's, just one generation further along — documented rather than silently dropped.
 
-### Bonus 1 — Comparing beds (approximate)
+### Bonus 1 — Comparing beds (mean bedrooms per property)
 
-The Airbnb dataset has **no bedroom-count column**, so an exact bed-for-bed comparison against the bond data's `Number Of Beds` breakdown isn't possible. As a documented, approximate stand-in, `room_type` was mapped to an assumed bed count (Entire home/apt ≈ 2, Private/Shared/Hotel room ≈ 1) and summed per area. Treat these figures as directional, not precise.
+The Airbnb dataset has **no bedroom-count column**, so an exact bed-for-bed comparison against the bond data's `Number Of Beds` breakdown isn't possible. As a documented, approximate stand-in, `room_type` was mapped to an assumed bed count (Entire home/apt ≈ 2, Private/Shared/Hotel room ≈ 1). Treat the results as directional, not precise.
+
+**Mean, not sum.** An earlier version summed bedrooms per area. Following supervisor feedback this was changed to a mean, because a total mostly repeats the property-count difference already shown in the listings-vs-bonds comparison, whereas a mean shows typical property size.
+
+- **Airbnb side:** each listing counted once per quarter, mean bedrooms per listing per area/quarter, then the median across quarters. Because the proxy only takes the values 1 and 2, this figure is really the share of whole-home listings, scaled between 1 and 2.
+- **Bond side:** a **weighted mean** (total bedrooms ÷ total active bonds) from the bond data's `Number Of Beds` breakdown, excluding the `ALL` rollup row. `5+` is counted as 5, so this is a lower bound.
+- **`size_diff`** = Airbnb mean − long-term mean per area. Positive means Airbnb properties are larger on average.
+
+**Decisions and their consequences:**
+
+| Decision | Reason | Effect |
+|---|---|---|
+| Excluded bond rows with a blank `Number Of Beds` from the bedroom mean | Unknown bedrooms cannot contribute to an average. Keeping them in the denominator (but not the numerator) made some areas show an impossible 0.000 bedrooms | 49 rows excluded |
+| Kept only areas where rows with a known bed count cover at least 80% of the area's active bonds (`MIN_BOND_COVERAGE = 0.8`) | Tenancy Services suppresses small bedroom categories for privacy; in small areas the mean would reflect only whichever categories survived (many areas showed exactly 1.000) | 116 → 30 areas |
+| Kept only areas with at least 10 Airbnb listings in a typical quarter (`MIN_LISTINGS_PER_QUARTER = 10`) | Avoids tiny areas dominating the ranking | 26 areas remain |
+
+Both thresholds are named parameters at the top of the cell and can be changed.
+
+**Findings (26 areas):**
+
+- Differences are small: the largest positive gap is 0.38 bedrooms, so in most areas short-term and long-term properties are similar in size.
+- The biggest positive gaps are inner-city areas with heavy Airbnb activity: Christchurch Central-East (+0.38, about 325 Airbnb listings per quarter, long-term mean ≈ 1.56), Addington West (+0.30) and Christchurch Central-North (+0.22). This is consistent with a smaller-unit long-term stock there.
+- Negative gaps appear in suburban and coastal areas, e.g. Sumner (−0.27), Mona Vale (−0.26), Sydenham North (−0.25) and Phillipstown (−0.21), consistent with larger long-term family homes.
+
+**Caveats:** the Airbnb proxy is capped at 2 bedrooms, so any area whose long-term mean exceeds 2 will show a negative gap regardless of true Airbnb sizes; the negative side is therefore partly an artefact of the proxy. The coverage filter means results describe the better-covered (mostly inner-suburb) areas, not all of Christchurch. Short-term and long-term are defined by data source (see above).
+
+A bar chart of `size_diff` by area is saved as `bedroom_size_diff_bar.png`.
 
 ### Bonus 2 — SQLite + SQL join
 
@@ -268,4 +307,28 @@ INNER JOIN bond AS b
 
 **Result: 21,946 rows — an exact match** with the pandas inner join, confirming the join logic is correct both ways.
 
-**Outputs:** `Airbnb_with_sa2.csv`, `sa2_cache.csv`, `christchurch_housing.db`, `gap_median_bar.png`.
+**Outputs:** `Airbnb_with_sa2.csv`, `sa2_cache.csv`, `christchurch_housing.db`, `gap_median_bar.png`, `gap_distribution_box.png`, `bedroom_size_diff_bar.png`.
+
+---
+
+## Deliverable 6 — Coding Practices Review
+
+We revisited the Deliverable 4 and 5 code against the Week 9 best coding practices (folder structure, relative paths, visible parameters with no magic numbers, self-documenting code, assertions, sanity checks).
+
+**Already following:** all file paths are relative (no `os.chdir()` or absolute paths); thresholds such as `PRICE_MIN`/`PRICE_MAX`, `MIN_LISTINGS_PER_AREA` and `LAYER` are named constants; variable names describe their contents; the SQL-vs-pandas join is checked with an `assert`.
+
+**Changes made and why (high level):**
+
+| Change | Why |
+|---|---|
+| Bonus 1 changed from a sum to a (weighted) mean of bedrooms | Supervisor feedback: a sum mostly restates the property-count difference; a mean shows typical property size |
+| Added a `size_diff` column and written interpretation | Draw insights from the differences between the two datasets, not just show the numbers |
+| Excluded unknown bed counts and added coverage and minimum-listing filters (named parameters) | The first version produced impossible values (0.000 bedrooms) and many exact 1.000s caused by blank bed counts and privacy suppression |
+| Stated how short-term vs. long-term is decided | It was implicit; it comes from the data source, not stay length |
+| Turned the "merge can't multiply rows" comment into an `assert` on the row count after the SA2 merge | A comment is a claim; an assertion fails immediately if it stops being true |
+
+**Sanity-check example:** after attaching SA2 codes to the Airbnb data, the code compares the row count before and after the merge and raises an error if it changed. This catches a lookup table that is not one row per point, which would silently duplicate listings.
+
+**Considered, not done:** splitting the Deliverable 5 notebook into smaller scripts (fetch, join, analyse) in line with the "lots of small files, not one big file" principle. This is a team decision, weighing modularity against the benefits of a single notebook for exploration and presentation.
+
+**Design principles document:** see `design_principles.md` for the pipeline's inputs, outputs, main steps and coding strategies. It was drafted with Claude (Anthropic) and checked against the code.
