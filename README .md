@@ -332,3 +332,181 @@ We revisited the Deliverable 4 and 5 code against the Week 9 best coding practic
 **Considered, not done:** splitting the Deliverable 5 notebook into smaller scripts (fetch, join, analyse) in line with the "lots of small files, not one big file" principle. This is a team decision, weighing modularity against the benefits of a single notebook for exploration and presentation.
 
 **Design principles document:** see `design_principles.md` for the pipeline's inputs, outputs, main steps and coding strategies. It was drafted with Claude (Anthropic) and checked against the code.
+
+# Deliverable 7 Automated Christchurch Airbnb Pipeline
+
+Run one command from this folder:
+
+```sh
+python update_pipeline.py
+```
+
+This rebuilds every supplied month from the original New Zealand plain `listings.csv`
+downloads, filters Christchurch, applies cleaning, adds cached SA2 codes, cleans and
+joins rental bonds, checks SQLite against pandas, and creates plots and a run report.
+The included result covers October 2025 through August 2026: 35,796 listing-month
+records, including 3,488 July and 3,513 August records.
+
+## First setup
+
+Extract the ZIP. Install dependencies once:
+
+```sh
+python -m pip install -r requirements.txt
+```
+
+For Google Colab, upload this ZIP and use a Python cell:
+
+```python
+from google.colab import files
+import zipfile
+uploaded = files.upload()
+with zipfile.ZipFile(next(iter(uploaded))) as archive:
+    archive.extractall('/content')
+```
+
+Then run these cells:
+
+```python
+%cd /content/Deliverable7_Complete
+!pip install -r requirements.txt
+!python update_pipeline.py
+```
+
+You can also call the function directly:
+
+```python
+from update_pipeline import run_pipeline
+updated = run_pipeline()
+```
+
+The supplied cache covers all current coordinates, so this package runs without a
+key. Future uncached coordinates require your own key. Set `KOORDINATES_API_KEY`,
+or put it in a local `koordinates_key.txt` file. Never commit that file. The
+`query_url` must match the service authorised for your key; the supplied endpoint
+is Koordinates, following the previous successful lookup. A Datafinder key may
+require the Datafinder endpoint instead. Authentication errors stop immediately.
+Other required lookup failures also stop the normal run. Existing outputs survive
+failed runs. No live API call was needed during this repair and validation.
+
+For a deliberately partial run without new API lookups:
+
+```sh
+python update_pipeline.py --offline
+```
+
+Pending coordinates are exported and `run_summary.json` says `partial` when any
+remain. `--offline` with complete cache coverage produces complete results.
+
+## Inputs and sources
+
+Airbnb source: https://insideairbnb.com/get-the-data/
+Use the New Zealand summary **listings.csv**, not listings.csv.gz. The ZIP includes
+all 11 supplied original snapshots, renamed `data/listings_YYYY-MM.csv`.
+The July and August files were supplied previously; no replacement downloads were
+made during this repair.
+
+Bond source: https://www.tenancy.govt.nz/about-tenancy-services/data-and-statistics/rental-bond-data/
+`data/bond_raw.csv` is the supplied detailed quarterly report. In this supplied file
+the latest matching quarter is 2026Q2. We have not established whether a newer
+publication is available. July and August are 2026Q3, so their bond values remain
+missing. They are included in Airbnb summaries and quarter counts, but not matched
+bond comparisons. To update comparisons, supply a newer bond file and change its
+path in `config.json` if needed.
+
+The bond columns include Location Id (area code), TimeFrame (quarter), Dwelling Type,
+Number Of Beds, Total Bonds, Active Bonds, Closed Bonds, and published weekly rent
+statistics. ALL/ALL rows provide area totals; bedroom breakdown rows are used only
+for the optional bedroom comparison. Suppressed rent statistics are left missing.
+The lookup retains the previously confirmed Christchurch area-code list. Missing
+area names are labelled with their SA2 code; no area-name mapping was guessed.
+The code-vintage compatibility and limited lookup coverage remain inherited
+limitations; this repair does not establish a new geographic concordance.
+
+## Cleaning and identity
+
+IDs and host IDs remain strings from input through CSV, Parquet and SQLite. Every
+output ID was checked against its original snapshot. The damaged baseline is no
+longer an input. Listing titles, host names, constant neighbourhood_group and empty
+license are dropped from processed outputs. Raw inputs remain unchanged.
+
+Missing prices remain missing, with a `price_missing` flag. Missing
+reviews_per_month is filled with zero only when number_of_reviews is zero; other
+missing review rates remain missing. This tightens the previous blanket fill.
+Review dates use explicit ISO or day/month/year formats. Coordinates keep their
+original precision, rather than being converted to float32 before mapping.
+Duplicate listing/month keys and invalid IDs, dates or numeric values stop the run.
+
+December 2025, January 2026 and February 2026 have entirely missing prices in the
+original raw downloads. Their cause is unknown; no values were invented. Price
+plots label those missing months. Configured review reference dates are inherited
+from earlier work, not independently verified scrape dates. 1,824 records have
+reviews after those reference dates and are exported for review; negative recency
+is excluded from the days-since-review histogram.
+
+The original cache had 4,136 coordinate keys. Re-reading full raw coordinate
+precision created 13 additional keys for already-mapped source listings. Their
+existing mappings were transferred only after a unique same-month title/host match,
+ID agreement within the earlier rounding error, and coordinate differences below
+0.00000005 degrees. `data/cache_coordinate_migration_audit.csv` records those 13
+transfers. These are inherited mappings, not new API results or nearest-neighbour
+spatial assignments. The supplied cache now covers 4,149 keys.
+
+## Outputs and findings
+
+`output/REPORT.md` and both JSON summaries are regenerated each run. They describe
+actual coverage and limitations. Outputs include cleaned Airbnb and bond CSVs and
+Parquet files; spatially enriched Airbnb data; left and inner bond joins; monthly
+coverage; area gaps; quarterly counts; bedroom proxy comparisons; and SQLite.
+The count chart labels missing area-level bond matches explicitly rather than
+showing them as observed zero bonds. Eight PNG plots cover the original analyses plus listing counts by month. The
+bedroom chart includes all 26 qualifying areas, with red negative and blue positive
+differences. It uses a configured room-type proxy, not observed Airbnb bedrooms.
+
+Current results: Christchurch Central median $244/night, 937 priced listing-month
+records and **157 distinct listings**. The old 197 count reflected inconsistent
+rounded IDs and must not be quoted. The inner join has 21,946 records; SQLite and
+pandas agree on every joined column after normalising storage types. Bond gap and
+bedroom comparisons still use quarters through Q2, whereas Airbnb-only charts
+include July and August. Repeated runs produced identical output file contents
+apart from the SQLite database container, whose table values are checked.
+
+## Updating future months
+
+Download each new plain listings.csv, add a `snapshots` entry and a reference date
+in `config.json`, then run the same command. Month ranges in output filenames are
+derived from the inputs. Analysis thresholds, area selection, bedroom proxy and
+API settings are configurable. Provide newer bonds when available. Reports and
+plots regenerate without manual notebook cell selection.
+
+## GitHub handoff
+
+The ZIP includes raw inputs for immediate reproduction. The supplied `.gitignore`
+keeps raw downloads, output and secrets local, while explicitly retaining config,
+lookup and cache despite common parent CSV/JSON/data exclusions. If an enclosing
+folder is itself ignored, unignore that folder in the repository root first.
+Use this exact command to add the required files even under inherited ignore rules
+(adjust the folder path when running from the repository root):
+
+```sh
+git add -f config.json data/sa2_cache.csv data/christchurch_sa2_lookup.csv data/cache_coordinate_migration_audit.csv
+git add update_pipeline.py rental_pipeline.py requirements.txt README.md CHANGELOG.md tests .gitignore
+```
+
+A fresh GitHub clone requires downloading the raw snapshots and bond CSV to the
+configured paths, or using this complete ZIP. They are intentionally not included
+in a normal source-only commit. Use this README as the repository Deliverable 7
+section or link to it from the repository's main README. No remote repository files
+were changed during this repair.
+
+## Verification
+
+```sh
+python -m unittest discover -s tests
+```
+
+The tests protect large IDs, ISO date parsing, privacy cleaning and immediate
+safe rejection of a wrong API key. Full-data checks compared every ID/month pair
+to raw inputs, verified repeatability, and confirmed that a missing key leaves
+previous outputs unchanged. Automated scheduling and GitHub Actions are optional;
+this package implements one-call orchestration and an automatically written report.
