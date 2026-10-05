@@ -79,3 +79,24 @@ cache/
 figures/          # or keep specific ones if small
 plots/
 eda_output/
+# Keep code, configuration, documented cache and area lookup even under parent file globs.
+!*.py
+!*.md
+!*.txt
+!config.json
+!requirements.txt
+!data/
+data/*
+!data/sa2_cache.csv
+!data/christchurch_sa2_lookup.csv
+!data/cache_coordinate_migration_audit.csv
+# Raw NZ snapshots stay local; source and download steps are documented in README.md.
+data/listings_*.csv
+data/bond_raw.csv
+koordinates_key.txt
+__pycache__/
+.pipeline-*/
+.output_previous/
+# Generated outputs are reproducible and stay local by default.
+output/
+!VERIFICATION.json
