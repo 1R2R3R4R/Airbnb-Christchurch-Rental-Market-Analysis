@@ -1,0 +1,35 @@
+{
+  "baseline": "data/baseline.csv",
+  "new_months": [
+    {
+      "file": "data/listings_2026-07.csv",
+      "month": "2026-07"
+    },
+    {
+      "file": "data/listings_2026-08.csv",
+      "month": "2026-08"
+    }
+  ],
+  "reference_dates": {
+    "2025-10": "2025-10-05",
+    "2025-11": "2025-11-07",
+    "2025-12": "2025-12-11",
+    "2026-01": "2026-01-16",
+    "2026-02": "2026-02-13",
+    "2026-03": "2026-03-17",
+    "2026-04": "2026-04-16",
+    "2026-05": "2026-05-23",
+    "2026-06": "2026-06-19",
+    "2026-07": "2026-07-12",
+    "2026-08": "2026-08-13"
+  },
+  "rental": {
+    "cache": "data/sa2_cache.csv",
+    "lookup": "data/christchurch_sa2_lookup.csv",
+    "bond_raw": "data/bond_raw.csv",
+    "layer": 123515,
+    "code_field": "SA22026_V1_00",
+    "query_url": "https://koordinates.com/services/query/v1/vector.json",
+    "workers": 6
+  }
+}
