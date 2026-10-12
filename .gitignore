@@ -19,6 +19,9 @@ datasets/
 *.json
 *.db
 *.sqlite3
+!data/sa2_cache.csv
+!data/christchurch_sa2_lookup.csv
+!data/cache_coordinate_migration_audit.csv
 
 # Keep a small sample if you want (uncomment and adjust)
 # !data/sample_small.csv
