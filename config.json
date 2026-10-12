@@ -1,14 +1,16 @@
 {
-  "baseline": "data/baseline.csv",
-  "new_months": [
-    {
-      "file": "data/listings_2026-07.csv",
-      "month": "2026-07"
-    },
-    {
-      "file": "data/listings_2026-08.csv",
-      "month": "2026-08"
-    }
+  "snapshots": [
+    {"month": "2025-10", "file": "data/listings_2025-10.csv"},
+    {"month": "2025-11", "file": "data/listings_2025-11.csv"},
+    {"month": "2025-12", "file": "data/listings_2025-12.csv"},
+    {"month": "2026-01", "file": "data/listings_2026-01.csv"},
+    {"month": "2026-02", "file": "data/listings_2026-02.csv"},
+    {"month": "2026-03", "file": "data/listings_2026-03.csv"},
+    {"month": "2026-04", "file": "data/listings_2026-04.csv"},
+    {"month": "2026-05", "file": "data/listings_2026-05.csv"},
+    {"month": "2026-06", "file": "data/listings_2026-06.csv"},
+    {"month": "2026-07", "file": "data/listings_2026-07.csv"},
+    {"month": "2026-08", "file": "data/listings_2026-08.csv"}
   ],
   "reference_dates": {
     "2025-10": "2025-10-05",
@@ -23,6 +25,26 @@
     "2026-07": "2026-07-12",
     "2026-08": "2026-08-13"
   },
+  "analysis": {
+    "city": "Christchurch City",
+    "plot_price_max": 1000,
+    "review_days_max": 100,
+    "rank_fraction": 0.10,
+    "central_area": 326600,
+    "comparison_price_min": 20,
+    "comparison_price_max": 800,
+    "gap_min_records": 20,
+    "gap_top_areas": 10,
+    "count_top_areas": 15,
+    "bed_min_coverage": 0.8,
+    "bed_min_listings": 10,
+    "bed_proxy": {
+      "Entire home/apt": 2,
+      "Private room": 1,
+      "Shared room": 1,
+      "Hotel room": 1
+    }
+  },
   "rental": {
     "cache": "data/sa2_cache.csv",
     "lookup": "data/christchurch_sa2_lookup.csv",
@@ -30,6 +52,10 @@
     "layer": 123515,
     "code_field": "SA22026_V1_00",
     "query_url": "https://koordinates.com/services/query/v1/vector.json",
-    "workers": 6
+    "workers": 6,
+    "attempts": 3,
+    "max_results": 1,
+    "radius": 100,
+    "timeout_seconds": 30
   }
 }
