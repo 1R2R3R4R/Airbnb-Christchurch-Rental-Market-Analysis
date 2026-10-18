@@ -21,11 +21,24 @@ Column meanings (for the README):
 - Total Bonds          : NEW bonds lodged that quarter (flow)
 - Active Bonds         : bonds currently active at quarter-end (stock)
 - Closed Bonds         : bonds closed/ended that quarter (flow)
-- Median/Geometric Mean/Upper Quartile/Lower Quartile Rent, Log Std Dev
-  Weekly Rent : weekly-rent statistics for that TimeFrame x Location x
-                Dwelling Type x Beds combination. NULL where Tenancy
-                Services suppressed the stat for privacy (very few bonds
-                in that cell).
+- Rent statistics (all weekly rent in NZ$, for each TimeFrame x Location x
+Dwelling Type x Beds combination, based on new bonds lodged that quarter):
+- Median Rent          : the actual middle weekly rent when all rents are
+                          sorted; half the new bonds are below it, half above.
+- Geometric Mean Rent  : multiply the rents together and take the nth root
+                          (= exp(mean(log(rent)))). Tenancy Services uses it as
+                          a smoother stand-in for the median: rents cluster at
+                          round numbers, so the median plateaus for months,
+                          while the geometric mean closely approximates the
+                          median when rents are log-normally distributed.
+- Upper Quartile Rent  : 75% of new bonds have a weekly rent at or below this.
+- Lower Quartile Rent  : 25% of new bonds have a weekly rent at or below this.
+- Log Std Dev Weekly Rent : standard deviation of the log rents; a measure of
+                          how spread out rents are in relative terms.
+Median Rent and the two quartile columns are actual values from the data;
+only Geometric Mean Rent and Log Std Dev are derived.
+All five are NULL where Tenancy Services suppressed them for privacy (very
+few bonds in that cell).
 """
 
 import pandas as pd
