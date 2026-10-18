@@ -143,7 +143,8 @@ To run without a key, use `python update_pipeline.py --offline`. Listings that s
 | `clean_bond.py` | Deliverable 4 bond data cleaning script (the final pipeline does this in `rental_pipeline.py`) |
 | `config.json` | Input files, dates and analysis settings such as price limits and minimum counts |
 | `requirements.txt` | Python packages for the pipeline and the notebooks |
-| `data/` | Area lookup, area-code cache, the bond file and the combined Oct 2025 – Jun 2026 Airbnb files (see [Data](#data)). The monthly `listings_YYYY-MM.csv` downloads go here too; they aren't committed || `01_explore_listings.ipynb`, `02_clean_data.ipynb`, `03_join_airbnb_bond.ipynb` | Earlier step-by-step notebooks (see below) |
+| `data/` | Area lookup, area-code cache, the bond file and the combined Oct 2025 – Jun 2026 Airbnb files (see [Data](#data)). The monthly `listings_YYYY-MM.csv` downloads go here too; they aren't committed |
+| `01_explore_listings.ipynb`, `02_clean_data.ipynb`, `03_join_airbnb_bond.ipynb` | Earlier step-by-step notebooks (see below) |
 | `TEAM.md` | Team members and who did what |
 
 `output/` is created when you run the pipeline and isn't committed.
