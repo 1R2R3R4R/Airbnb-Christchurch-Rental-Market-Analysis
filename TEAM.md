@@ -13,7 +13,7 @@
 
 **Arjun** – Coding, planning and organising, and managing the GitHub repository (pushing changes and reviewing). Built and cleaned the Christchurch Airbnb dataset, produced the summary statistics and graphs, and built the one-command pipeline (`update_pipeline.py`, `rental_pipeline.py`) with Merhawi.
 
-**Hari** – Found and fixed coding errors, and shared planning and organising with Arjun. Cleaned the rental bond data [(`clean_bond.py`) / (now in `prepare_bonds()` in `rental_pipeline.py`)], ran the coordinate-to-SA2 lookup for the Airbnb listings, and cross-checked the pipeline. Wrote the README sections.
+**Hari** – Found and fixed coding errors, and shared planning and organising with Arjun. Cleaned the rental bond data (`clean_bond.py`), ran the coordinate-to-SA2 lookup for the Airbnb listings, and cross-checked the pipeline. Wrote the README sections.
 
 **Merhawi** – Coding and data downloads. Downloaded the Inside Airbnb and Tenancy Services datasets, combined the monthly files, set up Koordinates API access, added SA2 area codes to the Airbnb data, and rebuilt all 11 months with the pipeline. Also checked work against the deliverable instructions and helped prepare the presentation.
 
