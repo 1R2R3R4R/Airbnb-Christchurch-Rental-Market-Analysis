@@ -67,12 +67,13 @@ Save these files in `data/` with exactly these names. The same list is in `confi
 
 These files are already in the repository:
 
-These files are already in the repository:
-
 | File | What it is |
 |---|---|
 | `christchurch_sa2_lookup.csv` | Christchurch SA2 area codes and names |
 | `sa2_cache.csv` | The SA2 area code for every listing location. Because of this file, **no API key is needed** to rerun the project |
+| `Detailed-Quarterly-Tenancy-Q1-2020-Q3-2026.csv` | Tenancy Services bond data (quarters up to April–June 2026), used by `clean_bond.py` |
+| `Airbnb_Oct25_Jun26.csv` | Combined Christchurch Airbnb listings, Oct 2025 – Jun 2026, used by notebooks 02 and 03 |
+| `christchurch_listings_2025-10_to_2026-06_final.csv` | Cleaned version of the combined listings from the earlier notebook stage |
 
 > **Older Airbnb files:** Inside Airbnb's public archive generally covers about the last 12 months, mostly quarterly. Older monthly files may need an archived-data request through their website, or you can ask the project team for a copy.
 >
@@ -142,8 +143,7 @@ To run without a key, use `python update_pipeline.py --offline`. Listings that s
 | `clean_bond.py` | Deliverable 4 bond data cleaning script (the final pipeline does this in `rental_pipeline.py`) |
 | `config.json` | Input files, dates and analysis settings such as price limits and minimum counts |
 | `requirements.txt` | Python packages for the pipeline and the notebooks |
-| `data/` | Area lookup and area-code cache. Put the raw downloads here too; they aren't committed |
-| `01_explore_listings.ipynb`, `02_clean_data.ipynb`, `03_join_airbnb_bond.ipynb` | Earlier step-by-step notebooks (see below) |
+| `data/` | Area lookup, area-code cache, the bond file and the combined Oct 2025 – Jun 2026 Airbnb files (see [Data](#data)). The monthly `listings_YYYY-MM.csv` downloads go here too; they aren't committed || `01_explore_listings.ipynb`, `02_clean_data.ipynb`, `03_join_airbnb_bond.ipynb` | Earlier step-by-step notebooks (see below) |
 | `TEAM.md` | Team members and who did what |
 
 `output/` is created when you run the pipeline and isn't committed.
