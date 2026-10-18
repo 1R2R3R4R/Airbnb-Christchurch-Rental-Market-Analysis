@@ -72,11 +72,12 @@ Save these files in `data/` with exactly these names. The same list is in `confi
 
 These files are already in the repository:
 
+These files are already in the repository:
+
 | File | What it is |
 |---|---|
 | `christchurch_sa2_lookup.csv` | Christchurch SA2 area codes and names |
 | `sa2_cache.csv` | The SA2 area code for every listing location. Because of this file, **no API key is needed** to rerun the project |
-| `cache_coordinate_migration_audit.csv` | A record of 13 cache entries that were carried over to full-precision coordinates |
 
 > **Older Airbnb files:** Inside Airbnb's public archive generally covers about the last 12 months, mostly quarterly. Older monthly files may need an archived-data request through their website, or you can ask the project team for a copy.
 >
@@ -142,15 +143,12 @@ To run without a key, use `python update_pipeline.py --offline`. Listings that s
 | Path | Purpose |
 |---|---|
 | `update_pipeline.py` | Main script; runs the whole project |
-| `rental_pipeline.py` | Area codes, bond data, joins and comparisons (used by the main script) |
+| `rental_pipeline.py` | Area codes, bond data cleaning, joins and comparisons (used by the main script) |
 | `config.json` | Input files, dates and analysis settings such as price limits and minimum counts |
-| `requirements.txt` | Python packages |
-| `data/` | Area lookup and area-code cache. The raw downloads go here too, but they aren't committed |
-| `tests/` | Unit tests |
+| `requirements.txt` | Python packages for the pipeline and the notebooks |
+| `data/` | Area lookup and area-code cache. Put the raw downloads here too; they aren't committed |
 | `01_explore_listings.ipynb`, `02_clean_data.ipynb`, `03_join_airbnb_bond.ipynb` | Earlier step-by-step notebooks (see below) |
-| `docs/detailed_notes.md` | Detailed notes on each stage of the project and every cleaning decision |
-| `CHANGELOG.md` | What changed in the latest version |
-| `TEAM.md` | Team members |
+| `TEAM.md` | Team members and who did what |
 
 `output/` is created when you run the pipeline and isn't committed.
 
