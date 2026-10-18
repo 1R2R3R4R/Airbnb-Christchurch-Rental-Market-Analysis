@@ -53,11 +53,6 @@ You need Python 3.12 or newer. The code has been tested on Python 3.12 and 3.13,
 
    It takes a few seconds. You should see `Finished (complete): 35,796 records.` at the end. The results go into `output/`; start with `output/REPORT.md`.
 
-4. **Run the tests (optional)**
-
-   ```sh
-   python -m unittest discover -s tests
-   ```
 
 **Google Colab:** run the same commands in a code cell, putting `!` in front of each one and using `%cd` instead of `cd`. Before step 3, upload the raw data files into `data/` using the Files panel.
 
@@ -144,6 +139,7 @@ To run without a key, use `python update_pipeline.py --offline`. Listings that s
 |---|---|
 | `update_pipeline.py` | Main script; runs the whole project |
 | `rental_pipeline.py` | Area codes, bond data cleaning, joins and comparisons (used by the main script) |
+| `clean_bond.py` | Deliverable 4 bond data cleaning script (the final pipeline does this in `rental_pipeline.py`) |
 | `config.json` | Input files, dates and analysis settings such as price limits and minimum counts |
 | `requirements.txt` | Python packages for the pipeline and the notebooks |
 | `data/` | Area lookup and area-code cache. Put the raw downloads here too; they aren't committed |
